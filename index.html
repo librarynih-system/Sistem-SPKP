@@ -2466,6 +2466,23 @@ body{background:#f7f8fc;color:var(--ink)}
     width:100%!important;
     text-align:center!important;
 }
+
+/* ===== DESKTOP FLUID VIEWPORT BALANCE ===== */
+
+@media (min-width:1201px) {
+
+    .exact-dashboard-page {
+        zoom: clamp(1, calc(100vh / 850px), 1.18);
+    }
+
+}
+
+/* ===== STAFF RESPONSIVE ZOOM ===== */
+@media (min-width:1201px) {
+    #page-staff {
+        zoom: clamp(1, calc(100vh / 750px), 1.30);
+    }
+}
 </style>
 </style>
 </head>
@@ -3273,7 +3290,7 @@ body{background:#f7f8fc;color:var(--ink)}
     <!-- ================== JAVASCRIPT LOGIC ================== -->
     <!-- PERINGATAN: Logik perniagaan, API, pengurusan state tidak diubah, hanya dimuatkan ke UI baharu -->
     <script>
-        const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxvSgjnyYiPOP0-apTK6JXXpCp0X0zS-S_QjnazYvr0iCpkwqmcj7vH4biyrTrEbLu2/exec"; 
+        const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbx9xnXIgC-5ZDxQEQdURn-k_oQh4QutCe901psGGlyIoDGtiXBZcQFN9otjyKZT3_QV/exec"; 
         
         let masterData = []; 
         let dashboardData = []; 
