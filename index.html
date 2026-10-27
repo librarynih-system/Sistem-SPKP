@@ -3290,7 +3290,7 @@ body{background:#f7f8fc;color:var(--ink)}
     <!-- ================== JAVASCRIPT LOGIC ================== -->
     <!-- PERINGATAN: Logik perniagaan, API, pengurusan state tidak diubah, hanya dimuatkan ke UI baharu -->
     <script>
-        const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxRh7vIh8QYJcukt0uFAg94khLxERtMlhIbgoSxyUbJtDKKqkYBY48nw8JPR0j_rYwf/exec"; 
+        const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbx0XKZ4GJnjPSitF4d_BeqB8yJoIMRE1YZYvqxXrvjdfMYeevkvvAjJqzIqZyDpKULa/exec"; 
         
         let masterData = []; 
         let dashboardData = []; 
@@ -4874,14 +4874,11 @@ body{background:#f7f8fc;color:var(--ink)}
             const index = masterData.findIndex(r => r.id === id);
             if (index === -1) { processingRows.delete(id); return; }
 
-            // Clone the record exactly like approveSingleRow does
             let recordToUpdate = {...masterData[index]};
-            
-            // Set the fields specifically for reopening
             recordToUpdate.oldAccession = masterData[index].accession;
-            recordToUpdate.status = 'incomplete'; // Reset status
-            recordToUpdate.approvedBy = '';       // Clear approver
-            recordToUpdate.approvedDate = '';     // Clear approval date
+            recordToUpdate.status = 'incomplete';
+            recordToUpdate.approvedBy = '';
+            recordToUpdate.approvedDate = '';
 
             fetch(GAS_WEB_APP_URL, {
                 method: 'POST', 
@@ -4891,15 +4888,8 @@ body{background:#f7f8fc;color:var(--ink)}
             .then(data => {
                 if (data.error) throw new Error(data.error);
                 if (data.success !== true) throw new Error('Server did not confirm the reopened record was saved.');
-                
                 dataMutationVersion++;
-                masterData[index] = recordToUpdate; // Update local data
-                
-                // If reopening from approvals tab, remove it from that view
-                if (tabId === 'approvals') {
-                     tabStates['approvals'].filtered = tabStates['approvals'].filtered.filter(r => r.id !== id);
-                }
-                
+                masterData[index] = recordToUpdate;
                 applyFilters(tabId, true);
                 showToast("Rekod dibuka semula (Reopened)!");
             })
