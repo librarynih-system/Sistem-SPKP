@@ -4876,9 +4876,18 @@ body{background:#f7f8fc;color:var(--ink)}
 
             let recordToUpdate = {...masterData[index]};
             recordToUpdate.oldAccession = masterData[index].accession;
-            recordToUpdate.status = 'incomplete';
-            recordToUpdate.approvedBy = '';
-            recordToUpdate.approvedDate = '';
+            
+            // Logik status tepat mengikut Institut
+            if (currentInstituteKey === 'IKU') {
+                recordToUpdate.status = 'Incomplete';
+            } else {
+                // Untuk IPK, IMR, dan IPSK
+                recordToUpdate.status = 'Not complete';
+            }
+            
+            // Mengelakkan ralat rentetan kosong ('') yang menyebabkan Apps Script crash
+            recordToUpdate.approvedBy = '-';
+            recordToUpdate.approvedDate = '-';
 
             fetch(GAS_WEB_APP_URL, {
                 method: 'POST', 
@@ -4887,7 +4896,7 @@ body{background:#f7f8fc;color:var(--ink)}
             .then(res => res.json())
             .then(data => {
                 if (data.error) throw new Error(data.error);
-                if (data.success !== true) throw new Error('Server did not confirm the reopened record was saved.');
+                if (data.success !== true) throw new Error('Pelayan gagal mengesahkan rekod disimpan.');
                 dataMutationVersion++;
                 masterData[index] = recordToUpdate;
                 applyFilters(tabId, true);
