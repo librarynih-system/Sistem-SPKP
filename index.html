@@ -4882,10 +4882,8 @@ body{background:#f7f8fc;color:var(--ink)}
 
             fetch(GAS_WEB_APP_URL, {
     method: 'POST', 
-    headers: {
-        "Content-Type": "text/plain;charset=utf-8" // PENTING: Ditambah untuk elak ralat CORS
-    },
-    redirect: "follow", // PENTING: Ditambah untuk sokongan Google Apps Script
+    redirect: "follow", // Kekalkan ini
+    // NOTA: Bahagian 'headers' telah dibuang sepenuhnya!
     body: JSON.stringify({ action: 'updateRow', institute: currentInstituteKey, record: recordToUpdate })
 })
 .then(res => res.json())
@@ -4899,7 +4897,7 @@ body{background:#f7f8fc;color:var(--ink)}
 })
 .catch(err => { alert("Gagal: " + err.message); applyFilters(tabId, true); })
 .finally(() => processingRows.delete(id));
-}
+        }
 
         function updateDashboardStats() {
             const elStaff = document.getElementById('dash-filter-staff');
