@@ -3290,7 +3290,7 @@ body{background:#f7f8fc;color:var(--ink)}
     <!-- ================== JAVASCRIPT LOGIC ================== -->
     <!-- PERINGATAN: Logik perniagaan, API, pengurusan state tidak diubah, hanya dimuatkan ke UI baharu -->
     <script>
-        const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxKf5P7oEKELQBRvolaLZ4YxDQnlQdeCgy7oLuNX9GRz2DPJvtgHrGQbyI7oBsyu-pr/exec"; 
+        const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxRh7vIh8QYJcukt0uFAg94khLxERtMlhIbgoSxyUbJtDKKqkYBY48nw8JPR0j_rYwf/exec"; 
         
         let masterData = []; 
         let dashboardData = []; 
@@ -4881,22 +4881,20 @@ body{background:#f7f8fc;color:var(--ink)}
             recordToUpdate.approvedDate = '';
 
             fetch(GAS_WEB_APP_URL, {
-    method: 'POST', 
-    redirect: "follow", // Kekalkan ini
-    // NOTA: Bahagian 'headers' telah dibuang sepenuhnya!
-    body: JSON.stringify({ action: 'updateRow', institute: currentInstituteKey, record: recordToUpdate })
-})
-.then(res => res.json())
-.then(data => {
-    if (data.error) throw new Error(data.error);
-    if (data.success !== true) throw new Error('Server did not confirm the reopened record was saved.');
-    dataMutationVersion++;
-    masterData[index] = recordToUpdate;
-    applyFilters(tabId, true);
-    showToast("Rekod dibuka semula (Reopened)!");
-})
-.catch(err => { alert("Gagal: " + err.message); applyFilters(tabId, true); })
-.finally(() => processingRows.delete(id));
+                method: 'POST', 
+                body: JSON.stringify({ action: 'updateRow', institute: currentInstituteKey, record: recordToUpdate })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) throw new Error(data.error);
+                if (data.success !== true) throw new Error('Server did not confirm the reopened record was saved.');
+                dataMutationVersion++;
+                masterData[index] = recordToUpdate;
+                applyFilters(tabId, true);
+                showToast("Rekod dibuka semula (Reopened)!");
+            })
+            .catch(err => { alert("Gagal: " + err.message); applyFilters(tabId, true); })
+            .finally(() => processingRows.delete(id));
         }
 
         function updateDashboardStats() {
