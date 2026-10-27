@@ -4686,7 +4686,8 @@ body{background:#f7f8fc;color:var(--ink)}
                     actionHtml = `<span class="text-gray-400 italic text-[10px] font-medium">—</span>`;
                 }
             } else if (currentUserRole === 'staff') {
-                if (tabId === 'approvals' || isCompleted || isReadonlyView) {
+                // TAMBAH SYARAT 'pending for approval' DI SINI
+                if (tabId === 'approvals' || isCompleted || currentStatusLower === 'pending for approval' || isReadonlyView) {
                     actionHtml = `<span class="text-gray-400 italic text-[10px] font-medium">—</span>`;
                 } else {
                     actionHtml = `<button type="button" onclick="editRow(${row.id}, '${tabId}')" class="text-primary-600 hover:text-white bg-primary-100 hover:bg-primary-600 p-1.5 rounded transition shadow-sm" title="Edit Rekod"><i data-lucide="edit-2" class="w-3.5 h-3.5"></i></button>`;
