@@ -4615,20 +4615,32 @@ body{background:#f7f8fc;color:var(--ink)}
                         : `<td class="px-3 py-3 whitespace-nowrap"><input type="text" id="edit-c082-${tabId}-${row.id}" value="${row.callNo082 || ''}" class="w-full text-[11px] px-2 py-1.5 border border-gray-300 rounded focus:border-primary-500 text-center shadow-sm"></td>`;
                 }
 
+                // 1. TENTUKAN EJAAN 'INCOMPLETE' YANG TEPAT MENGIKUT INSTITUT
+                let txtIncomplete = 'incomplete';
+                if (currentInstituteKey === 'IMR') {
+                    txtIncomplete = 'Not complete';
+                } else if (currentInstituteKey === 'IPK' || currentInstituteKey === 'IPSK') {
+                    txtIncomplete = 'Not Complete';
+                }
+
                 let statusSelectHTML = '';
                 if (currentUserRole === 'staff') {
                     let isStaffCompleted = (row.status === 'Completed' || row.status === 'Pending For Approval');
                     statusSelectHTML = `
                         <select id="edit-status-${tabId}-${row.id}" class="edit-row-status-select w-full text-[11px] px-1 py-1.5 border border-gray-300 rounded focus:border-primary-500 font-bold text-gray-700 shadow-sm outline-none">
                             <option value="Completed" ${isStaffCompleted ? 'selected' : ''}>Completed</option>
-                            <option value="incomplete" ${!isStaffCompleted ? 'selected' : ''}>Incomplete</option>
+                            <option value="${txtIncomplete}" ${!isStaffCompleted ? 'selected' : ''}>Incomplete</option>
                         </select>
                     `;
                 } else {
-                    const statusOptionsLocal = ["Completed", "incomplete", "Pending For Approval"];
+                    const statusOptionsLocal = ["Completed", txtIncomplete, "Pending For Approval"];
                     statusSelectHTML = `
                         <select id="edit-status-${tabId}-${row.id}" class="edit-row-status-select w-full text-[11px] px-1 py-1.5 border border-gray-300 rounded focus:border-primary-500 font-bold text-gray-700 shadow-sm outline-none">
-                            ${statusOptionsLocal.map(opt => `<option value="${opt}" ${row.status === opt ? 'selected' : ''}>${opt}</option>`).join('')}
+                            ${statusOptionsLocal.map(opt => {
+                                // Paparkan perkataan 'Incomplete' pada skrin walaupun nilai di belakangnya ialah 'Not Complete'
+                                const displayLabel = (opt === txtIncomplete) ? 'Incomplete' : opt;
+                                return `<option value="${opt}" ${row.status === opt ? 'selected' : ''}>${displayLabel}</option>`;
+                            }).join('')}
                         </select>
                     `;
                 }
