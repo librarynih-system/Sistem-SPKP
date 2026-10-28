@@ -4468,6 +4468,12 @@ body{background:#f7f8fc;color:var(--ink)}
                 (staffEl && staffEl.value) ||
                 (yearEl && yearEl.value) ||
                 (statusEl && statusEl.value)
+
+            // 3. TAMBAH window.scrollTo DI SINI (Paksa skrin kekal di posisi asal)
+            if (tableContainer) tableContainer.scrollTop = currentTableScroll;
+            window.scrollTo(0, currentWindowScroll); 
+            lucide.createIcons(); // Update icons for newly rendered rows
+        }
             );
 
             const emptyStateHtml = (message, helper) => `
@@ -4749,6 +4755,9 @@ body{background:#f7f8fc;color:var(--ink)}
 
         function saveRow(id, tabId) {
             if (processingRows.has(id)) return;
+
+            // 1. TAMBAH BARIS INI: Matikan fokus untuk halang browser merentap skrin
+            if (document.activeElement) document.activeElement.blur();
             
             const statusEl = document.getElementById(`edit-status-${tabId}-${id}`);
             const ctrlEl = document.getElementById(`edit-ctrl-${tabId}-${id}`);
