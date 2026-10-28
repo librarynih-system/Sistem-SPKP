@@ -4810,7 +4810,23 @@ body{background:#f7f8fc;color:var(--ink)}
                 dataMutationVersion++;
                 masterData[index] = updatedRecord;
                 editingId = null;
+                
+                // 1. REKOD POSISI SCROLL SEBELUM JADUAL DIKEMAS KINI
+                const currentScrollY = window.scrollY || document.documentElement.scrollTop;
+                const container = document.querySelector('.table-container-scroll');
+                const containerScroll = container ? container.scrollTop : 0;
+
+                // 2. LUKIS JADUAL
                 applyFilters(tabId, true);
+
+                // 3. KUNCI POSISI SCROLL SECARA AGRESIF (Halang pelayar tersentak)
+                const lockScroll = () => {
+                    window.scrollTo(0, currentScrollY);
+                    if (container) container.scrollTop = containerScroll;
+                };
+                lockScroll();
+                setTimeout(lockScroll, 10);
+                setTimeout(lockScroll, 50);
 
                 // Briefly highlight only the row that was successfully saved.
                 setTimeout(() => {
