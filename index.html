@@ -4468,12 +4468,6 @@ body{background:#f7f8fc;color:var(--ink)}
                 (staffEl && staffEl.value) ||
                 (yearEl && yearEl.value) ||
                 (statusEl && statusEl.value)
-
-            // 3. TAMBAH window.scrollTo DI SINI (Paksa skrin kekal di posisi asal)
-            if (tableContainer) tableContainer.scrollTop = currentTableScroll;
-            window.scrollTo(0, currentWindowScroll); 
-            lucide.createIcons(); // Update icons for newly rendered rows
-        }
             );
 
             const emptyStateHtml = (message, helper) => `
@@ -4756,9 +4750,6 @@ body{background:#f7f8fc;color:var(--ink)}
         function saveRow(id, tabId) {
             if (processingRows.has(id)) return;
             
-            // Matikan fokus untuk elak skrin tersentak
-            if (document.activeElement) document.activeElement.blur();
-            
             const statusEl = document.getElementById(`edit-status-${tabId}-${id}`);
             const ctrlEl = document.getElementById(`edit-ctrl-${tabId}-${id}`);
             const c082El = document.getElementById(`edit-c082-${tabId}-${id}`);
@@ -4807,34 +4798,17 @@ body{background:#f7f8fc;color:var(--ink)}
             .then(data => {
                 if (data.error) throw new Error(data.error);
                 if (data.success !== true) throw new Error('Server did not confirm the record was saved.');
-                
                 dataMutationVersion++;
                 masterData[index] = updatedRecord;
                 editingId = null;
-                
-                // REKOD POSISI SCROLL SEBELUM JADUAL DIKEMAS KINI
-                const currentScrollY = window.scrollY || document.documentElement.scrollTop;
-                const container = document.querySelector('.table-container-scroll');
-                const containerScroll = container ? container.scrollTop : 0;
-
-                // LUKIS JADUAL
                 applyFilters(tabId, true);
-
-                // KUNCI POSISI SCROLL SECARA AGRESIF
-                const lockScroll = () => {
-                    window.scrollTo(0, currentScrollY);
-                    if (container) container.scrollTop = containerScroll;
-                };
-                lockScroll();
-                setTimeout(lockScroll, 10);
-                setTimeout(lockScroll, 50);
 
                 // Briefly highlight only the row that was successfully saved.
                 setTimeout(() => {
                     const savedRow = document.getElementById(`row-${tabId}-${id}`);
                     if (savedRow) {
                         savedRow.classList.remove('saved-row-flash');
-                        void savedRow.offsetWidth; // restart animation
+                        void savedRow.offsetWidth; // restart animation if the same row is saved again
                         savedRow.classList.add('saved-row-flash');
                         setTimeout(() => savedRow.classList.remove('saved-row-flash'), 1900);
                     }
@@ -4842,10 +4816,7 @@ body{background:#f7f8fc;color:var(--ink)}
 
                 showToast("Rekod berjaya dikemaskini.");
             })
-            .catch(err => { 
-                alert("Ralat: " + err.message); 
-                applyFilters(tabId, true); 
-            })
+            .catch(err => { alert("Ralat: " + err.message); applyFilters(tabId, true); })
             .finally(() => {
                 processingRows.delete(id);
                 hideLoading();
