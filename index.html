@@ -4755,8 +4755,8 @@ body{background:#f7f8fc;color:var(--ink)}
 
         function saveRow(id, tabId) {
             if (processingRows.has(id)) return;
-
-            // 1. TAMBAH BARIS INI: Matikan fokus untuk halang browser merentap skrin
+            
+            // Matikan fokus untuk elak skrin tersentak
             if (document.activeElement) document.activeElement.blur();
             
             const statusEl = document.getElementById(`edit-status-${tabId}-${id}`);
@@ -4807,19 +4807,20 @@ body{background:#f7f8fc;color:var(--ink)}
             .then(data => {
                 if (data.error) throw new Error(data.error);
                 if (data.success !== true) throw new Error('Server did not confirm the record was saved.');
+                
                 dataMutationVersion++;
                 masterData[index] = updatedRecord;
                 editingId = null;
                 
-                // 1. REKOD POSISI SCROLL SEBELUM JADUAL DIKEMAS KINI
+                // REKOD POSISI SCROLL SEBELUM JADUAL DIKEMAS KINI
                 const currentScrollY = window.scrollY || document.documentElement.scrollTop;
                 const container = document.querySelector('.table-container-scroll');
                 const containerScroll = container ? container.scrollTop : 0;
 
-                // 2. LUKIS JADUAL
+                // LUKIS JADUAL
                 applyFilters(tabId, true);
 
-                // 3. KUNCI POSISI SCROLL SECARA AGRESIF (Halang pelayar tersentak)
+                // KUNCI POSISI SCROLL SECARA AGRESIF
                 const lockScroll = () => {
                     window.scrollTo(0, currentScrollY);
                     if (container) container.scrollTop = containerScroll;
@@ -4833,7 +4834,7 @@ body{background:#f7f8fc;color:var(--ink)}
                     const savedRow = document.getElementById(`row-${tabId}-${id}`);
                     if (savedRow) {
                         savedRow.classList.remove('saved-row-flash');
-                        void savedRow.offsetWidth; // restart animation if the same row is saved again
+                        void savedRow.offsetWidth; // restart animation
                         savedRow.classList.add('saved-row-flash');
                         setTimeout(() => savedRow.classList.remove('saved-row-flash'), 1900);
                     }
@@ -4841,7 +4842,10 @@ body{background:#f7f8fc;color:var(--ink)}
 
                 showToast("Rekod berjaya dikemaskini.");
             })
-            .catch(err => { alert("Ralat: " + err.message); applyFilters(tabId, true); })
+            .catch(err => { 
+                alert("Ralat: " + err.message); 
+                applyFilters(tabId, true); 
+            })
             .finally(() => {
                 processingRows.delete(id);
                 hideLoading();
