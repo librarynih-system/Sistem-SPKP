@@ -4468,6 +4468,12 @@ body{background:#f7f8fc;color:var(--ink)}
                 (staffEl && staffEl.value) ||
                 (yearEl && yearEl.value) ||
                 (statusEl && statusEl.value)
+
+            // 3. TAMBAH window.scrollTo DI SINI (Paksa skrin kekal di posisi asal)
+            if (tableContainer) tableContainer.scrollTop = currentTableScroll;
+            window.scrollTo(0, currentWindowScroll); 
+            lucide.createIcons(); // Update icons for newly rendered rows
+        }
             );
 
             const emptyStateHtml = (message, helper) => `
@@ -4615,20 +4621,32 @@ body{background:#f7f8fc;color:var(--ink)}
                         : `<td class="px-3 py-3 whitespace-nowrap"><input type="text" id="edit-c082-${tabId}-${row.id}" value="${row.callNo082 || ''}" class="w-full text-[11px] px-2 py-1.5 border border-gray-300 rounded focus:border-primary-500 text-center shadow-sm"></td>`;
                 }
 
+                // 1. TENTUKAN EJAAN 'INCOMPLETE' YANG TEPAT MENGIKUT INSTITUT
+                let txtIncomplete = 'incomplete';
+                if (currentInstituteKey === 'IMR') {
+                    txtIncomplete = 'Not complete';
+                } else if (currentInstituteKey === 'IPK' || currentInstituteKey === 'IPSK') {
+                    txtIncomplete = 'Not Complete';
+                }
+
                 let statusSelectHTML = '';
                 if (currentUserRole === 'staff') {
                     let isStaffCompleted = (row.status === 'Completed' || row.status === 'Pending For Approval');
                     statusSelectHTML = `
                         <select id="edit-status-${tabId}-${row.id}" class="edit-row-status-select w-full text-[11px] px-1 py-1.5 border border-gray-300 rounded focus:border-primary-500 font-bold text-gray-700 shadow-sm outline-none">
                             <option value="Completed" ${isStaffCompleted ? 'selected' : ''}>Completed</option>
-                            <option value="incomplete" ${!isStaffCompleted ? 'selected' : ''}>Incomplete</option>
+                            <option value="${txtIncomplete}" ${!isStaffCompleted ? 'selected' : ''}>Incomplete</option>
                         </select>
                     `;
                 } else {
-                    const statusOptionsLocal = ["Completed", "incomplete", "Pending For Approval"];
+                    const statusOptionsLocal = ["Completed", txtIncomplete, "Pending For Approval"];
                     statusSelectHTML = `
                         <select id="edit-status-${tabId}-${row.id}" class="edit-row-status-select w-full text-[11px] px-1 py-1.5 border border-gray-300 rounded focus:border-primary-500 font-bold text-gray-700 shadow-sm outline-none">
-                            ${statusOptionsLocal.map(opt => `<option value="${opt}" ${row.status === opt ? 'selected' : ''}>${opt}</option>`).join('')}
+                            ${statusOptionsLocal.map(opt => {
+                                // Paparkan perkataan 'Incomplete' pada skrin walaupun nilai di belakangnya ialah 'Not Complete'
+                                const displayLabel = (opt === txtIncomplete) ? 'Incomplete' : opt;
+                                return `<option value="${opt}" ${row.status === opt ? 'selected' : ''}>${displayLabel}</option>`;
+                            }).join('')}
                         </select>
                     `;
                 }
@@ -4674,7 +4692,8 @@ body{background:#f7f8fc;color:var(--ink)}
                     actionHtml = `<span class="text-gray-400 italic text-[10px] font-medium">—</span>`;
                 }
             } else if (currentUserRole === 'staff') {
-                if (tabId === 'approvals' || isCompleted || isReadonlyView) {
+                // TAMBAH SYARAT 'pending for approval' DI SINI
+                if (tabId === 'approvals' || isCompleted || currentStatusLower === 'pending for approval' || isReadonlyView) {
                     actionHtml = `<span class="text-gray-400 italic text-[10px] font-medium">—</span>`;
                 } else {
                     actionHtml = `<button type="button" onclick="editRow(${row.id}, '${tabId}')" class="text-primary-600 hover:text-white bg-primary-100 hover:bg-primary-600 p-1.5 rounded transition shadow-sm" title="Edit Rekod"><i data-lucide="edit-2" class="w-3.5 h-3.5"></i></button>`;
@@ -4737,6 +4756,9 @@ body{background:#f7f8fc;color:var(--ink)}
         function saveRow(id, tabId) {
             if (processingRows.has(id)) return;
             
+            // Matikan fokus untuk elak skrin tersentak
+            if (document.activeElement) document.activeElement.blur();
+            
             const statusEl = document.getElementById(`edit-status-${tabId}-${id}`);
             const ctrlEl = document.getElementById(`edit-ctrl-${tabId}-${id}`);
             const c082El = document.getElementById(`edit-c082-${tabId}-${id}`);
@@ -4785,17 +4807,34 @@ body{background:#f7f8fc;color:var(--ink)}
             .then(data => {
                 if (data.error) throw new Error(data.error);
                 if (data.success !== true) throw new Error('Server did not confirm the record was saved.');
+                
                 dataMutationVersion++;
                 masterData[index] = updatedRecord;
                 editingId = null;
+                
+                // REKOD POSISI SCROLL SEBELUM JADUAL DIKEMAS KINI
+                const currentScrollY = window.scrollY || document.documentElement.scrollTop;
+                const container = document.querySelector('.table-container-scroll');
+                const containerScroll = container ? container.scrollTop : 0;
+
+                // LUKIS JADUAL
                 applyFilters(tabId, true);
+
+                // KUNCI POSISI SCROLL SECARA AGRESIF
+                const lockScroll = () => {
+                    window.scrollTo(0, currentScrollY);
+                    if (container) container.scrollTop = containerScroll;
+                };
+                lockScroll();
+                setTimeout(lockScroll, 10);
+                setTimeout(lockScroll, 50);
 
                 // Briefly highlight only the row that was successfully saved.
                 setTimeout(() => {
                     const savedRow = document.getElementById(`row-${tabId}-${id}`);
                     if (savedRow) {
                         savedRow.classList.remove('saved-row-flash');
-                        void savedRow.offsetWidth; // restart animation if the same row is saved again
+                        void savedRow.offsetWidth; // restart animation
                         savedRow.classList.add('saved-row-flash');
                         setTimeout(() => savedRow.classList.remove('saved-row-flash'), 1900);
                     }
@@ -4803,7 +4842,10 @@ body{background:#f7f8fc;color:var(--ink)}
 
                 showToast("Rekod berjaya dikemaskini.");
             })
-            .catch(err => { alert("Ralat: " + err.message); applyFilters(tabId, true); })
+            .catch(err => { 
+                alert("Ralat: " + err.message); 
+                applyFilters(tabId, true); 
+            })
             .finally(() => {
                 processingRows.delete(id);
                 hideLoading();
@@ -4876,7 +4918,19 @@ body{background:#f7f8fc;color:var(--ink)}
 
             let recordToUpdate = {...masterData[index]};
             recordToUpdate.oldAccession = masterData[index].accession;
-            recordToUpdate.status = 'incomplete';
+            
+            // LOGIK EJAAN STATUS YANG 100% TEPAT MENGIKUT INSTITUT
+            if (currentInstituteKey === 'IKU') {
+                recordToUpdate.status = 'incomplete';
+            } 
+            else if (currentInstituteKey === 'IMR') {
+                recordToUpdate.status = 'Not complete';
+            } 
+            else if (currentInstituteKey === 'IPK' || currentInstituteKey === 'IPSK') {
+                recordToUpdate.status = 'Not Complete';
+            }
+            
+            // Kosongkan nama pelulus dan tarikh kelulusan
             recordToUpdate.approvedBy = '';
             recordToUpdate.approvedDate = '';
 
@@ -4887,9 +4941,11 @@ body{background:#f7f8fc;color:var(--ink)}
             .then(res => res.json())
             .then(data => {
                 if (data.error) throw new Error(data.error);
-                if (data.success !== true) throw new Error('Server did not confirm the reopened record was saved.');
+                if (data.success !== true) throw new Error('Pelayan gagal mengesahkan.');
+                
                 dataMutationVersion++;
                 masterData[index] = recordToUpdate;
+                
                 applyFilters(tabId, true);
                 showToast("Rekod dibuka semula (Reopened)!");
             })
