@@ -4801,11 +4801,11 @@ body{background:#f7f8fc;color:var(--ink)}
                 dataMutationVersion++;
                 masterData[index] = updatedRecord;
                 editingId = null;
+
+                // Lepaskan fokus dengan selamat untuk elak browser panik dan merentap skrin
+                if (document.activeElement) document.activeElement.blur();
+
                 applyFilters(tabId, true);
-                // Kunci posisi scroll supaya skrin tak melompat
-                const scrollY = window.scrollY;
-                const box = document.querySelector('.table-container-scroll');
-                setTimeout(() => { window.scrollTo(0, scrollY); if(box) box.scrollTop = box.scrollTop; }, 10);
 
                 // Briefly highlight only the row that was successfully saved.
                 setTimeout(() => {
