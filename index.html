@@ -2485,6 +2485,13 @@ body{background:#f7f8fc;color:var(--ink)}
 }
 </style>
 </style>
+<style>
+    /* FIX: Elakkan pelayar mengubah kedudukan skrol
+       secara automatik apabila kandungan jadual berubah. */
+    .table-container-scroll {
+        overflow-anchor: none;
+    }
+</style>
 </head>
 <body class="flex h-screen overflow-hidden selection:bg-theme-primary selection:text-white">
 
@@ -4221,6 +4228,12 @@ body{background:#f7f8fc;color:var(--ink)}
                 if (requestMutationVersion !== dataMutationVersion) {
                     return;
                 }
+                // Jangan benarkan auto-sync melukis semula jadual
+                // ketika pengguna sedang mengedit atau menyimpan rekod.
+                // FIX: Elakkan input hilang ketika sedang mengedit.
+                if (editingId !== null || processingRows.size > 0) {
+                    return;
+                }
 
                 if (Array.isArray(data)) {
                     masterData = data; 
@@ -4801,10 +4814,6 @@ body{background:#f7f8fc;color:var(--ink)}
                 dataMutationVersion++;
                 masterData[index] = updatedRecord;
                 editingId = null;
-
-                // Lepaskan fokus dengan selamat untuk elak browser panik dan merentap skrin
-                if (document.activeElement) document.activeElement.blur();
-
                 applyFilters(tabId, true);
 
                 // Briefly highlight only the row that was successfully saved.
