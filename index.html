@@ -2485,13 +2485,6 @@ body{background:#f7f8fc;color:var(--ink)}
 }
 </style>
 </style>
-<style>
-    /* FIX: Elakkan pelayar mengubah kedudukan skrol
-       secara automatik apabila kandungan jadual berubah. */
-    .table-container-scroll {
-        overflow-anchor: none;
-    }
-</style>
 </head>
 <body class="flex h-screen overflow-hidden selection:bg-theme-primary selection:text-white">
 
@@ -4228,12 +4221,6 @@ body{background:#f7f8fc;color:var(--ink)}
                 if (requestMutationVersion !== dataMutationVersion) {
                     return;
                 }
-                // Jangan benarkan auto-sync melukis semula jadual
-                // ketika pengguna sedang mengedit atau menyimpan rekod.
-                // FIX: Elakkan input hilang ketika sedang mengedit.
-                if (editingId !== null || processingRows.size > 0) {
-                    return;
-                }
 
                 if (Array.isArray(data)) {
                     masterData = data; 
@@ -4628,32 +4615,20 @@ body{background:#f7f8fc;color:var(--ink)}
                         : `<td class="px-3 py-3 whitespace-nowrap"><input type="text" id="edit-c082-${tabId}-${row.id}" value="${row.callNo082 || ''}" class="w-full text-[11px] px-2 py-1.5 border border-gray-300 rounded focus:border-primary-500 text-center shadow-sm"></td>`;
                 }
 
-                // 1. TENTUKAN EJAAN 'INCOMPLETE' YANG TEPAT MENGIKUT INSTITUT
-                let txtIncomplete = 'incomplete';
-                if (currentInstituteKey === 'IMR') {
-                    txtIncomplete = 'Not complete';
-                } else if (currentInstituteKey === 'IPK' || currentInstituteKey === 'IPSK') {
-                    txtIncomplete = 'Not Complete';
-                }
-
                 let statusSelectHTML = '';
                 if (currentUserRole === 'staff') {
                     let isStaffCompleted = (row.status === 'Completed' || row.status === 'Pending For Approval');
                     statusSelectHTML = `
                         <select id="edit-status-${tabId}-${row.id}" class="edit-row-status-select w-full text-[11px] px-1 py-1.5 border border-gray-300 rounded focus:border-primary-500 font-bold text-gray-700 shadow-sm outline-none">
                             <option value="Completed" ${isStaffCompleted ? 'selected' : ''}>Completed</option>
-                            <option value="${txtIncomplete}" ${!isStaffCompleted ? 'selected' : ''}>Incomplete</option>
+                            <option value="incomplete" ${!isStaffCompleted ? 'selected' : ''}>Incomplete</option>
                         </select>
                     `;
                 } else {
-                    const statusOptionsLocal = ["Completed", txtIncomplete, "Pending For Approval"];
+                    const statusOptionsLocal = ["Completed", "incomplete", "Pending For Approval"];
                     statusSelectHTML = `
                         <select id="edit-status-${tabId}-${row.id}" class="edit-row-status-select w-full text-[11px] px-1 py-1.5 border border-gray-300 rounded focus:border-primary-500 font-bold text-gray-700 shadow-sm outline-none">
-                            ${statusOptionsLocal.map(opt => {
-                                // Paparkan perkataan 'Incomplete' pada skrin walaupun nilai di belakangnya ialah 'Not Complete'
-                                const displayLabel = (opt === txtIncomplete) ? 'Incomplete' : opt;
-                                return `<option value="${opt}" ${row.status === opt ? 'selected' : ''}>${displayLabel}</option>`;
-                            }).join('')}
+                            ${statusOptionsLocal.map(opt => `<option value="${opt}" ${row.status === opt ? 'selected' : ''}>${opt}</option>`).join('')}
                         </select>
                     `;
                 }
@@ -4699,8 +4674,7 @@ body{background:#f7f8fc;color:var(--ink)}
                     actionHtml = `<span class="text-gray-400 italic text-[10px] font-medium">—</span>`;
                 }
             } else if (currentUserRole === 'staff') {
-                // TAMBAH SYARAT 'pending for approval' DI SINI
-                if (tabId === 'approvals' || isCompleted || currentStatusLower === 'pending for approval' || isReadonlyView) {
+                if (tabId === 'approvals' || isCompleted || isReadonlyView) {
                     actionHtml = `<span class="text-gray-400 italic text-[10px] font-medium">—</span>`;
                 } else {
                     actionHtml = `<button type="button" onclick="editRow(${row.id}, '${tabId}')" class="text-primary-600 hover:text-white bg-primary-100 hover:bg-primary-600 p-1.5 rounded transition shadow-sm" title="Edit Rekod"><i data-lucide="edit-2" class="w-3.5 h-3.5"></i></button>`;
@@ -4902,19 +4876,7 @@ body{background:#f7f8fc;color:var(--ink)}
 
             let recordToUpdate = {...masterData[index]};
             recordToUpdate.oldAccession = masterData[index].accession;
-            
-            // LOGIK EJAAN STATUS YANG 100% TEPAT MENGIKUT INSTITUT
-            if (currentInstituteKey === 'IKU') {
-                recordToUpdate.status = 'incomplete';
-            } 
-            else if (currentInstituteKey === 'IMR') {
-                recordToUpdate.status = 'Not complete';
-            } 
-            else if (currentInstituteKey === 'IPK' || currentInstituteKey === 'IPSK') {
-                recordToUpdate.status = 'Not Complete';
-            }
-            
-            // Kosongkan nama pelulus dan tarikh kelulusan
+            recordToUpdate.status = 'incomplete';
             recordToUpdate.approvedBy = '';
             recordToUpdate.approvedDate = '';
 
@@ -4925,11 +4887,9 @@ body{background:#f7f8fc;color:var(--ink)}
             .then(res => res.json())
             .then(data => {
                 if (data.error) throw new Error(data.error);
-                if (data.success !== true) throw new Error('Pelayan gagal mengesahkan.');
-                
+                if (data.success !== true) throw new Error('Server did not confirm the reopened record was saved.');
                 dataMutationVersion++;
                 masterData[index] = recordToUpdate;
-                
                 applyFilters(tabId, true);
                 showToast("Rekod dibuka semula (Reopened)!");
             })
